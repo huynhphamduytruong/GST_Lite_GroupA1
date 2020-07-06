@@ -62,6 +62,7 @@ public class UserController {
 		User user = userRepository.findById(userId)
 				.orElseThrow(() -> new ResourceNotFoundException("User not found on:" + userId));
 		user.setPassword(userDetails.getPassword());
+		user.setRole(userDetails.getRole());
 		final User updateUser = userRepository.save(user);
 		return ResponseEntity.ok(updateUser);
 	}
