@@ -8,9 +8,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+import org.springframework.web.util.UriComponents;
 
 import com.gstlite.mobilestore.entites.*;
 import com.gstlite.mobilestore.repositories.*;
+import com.gstlite.mobilestore.service.FileStorageService;
 import com.gstlite.mobilestore.exceptions.ResourceNotFoundException;
 
 @RestController
@@ -19,6 +23,9 @@ public class ProductController {
 	@Autowired
 	private ProductRepository productRepository;
 
+    @Autowired
+    private FileStorageService fileStorageService;
+    
 	@GetMapping("/list")
 	public List<Product> getAllUsers() {
 		return productRepository.findAll();
@@ -31,8 +38,15 @@ public class ProductController {
 		return ResponseEntity.ok().body(product);
 	}
 	
-	@PostMapping("/add")
-	public Product create(@Validated @RequestBody Product product) {
+	@RequestMapping(path = "/add", method = RequestMethod.POST,
+	        consumes = {"multipart/form-data", "application/json"})
+	public Product create(@Validated @ModelAttribute Product product, @RequestPart(value="image", required = true) final MultipartFile image) {
+		String fileName = fileStorageService.storeFile(image);
+		UriComponents file = ServletUriComponentsBuilder.fromCurrentContextPath()
+                .path("/file/")
+                .path(fileName)
+                .build();
+		product.setImageFile(file.toUriString()); // Change to full URL instead of relative path for remote usage
 		return productRepository.save(product);
 	}
 
